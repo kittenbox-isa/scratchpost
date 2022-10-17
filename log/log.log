@@ -1,0 +1,21 @@
+[13:56:36] [INFO] [Logger] Current day is: 25/08/2022
+[13:56:36] [INFO] [Runtime] Starting Engine!
+[13:56:36] [INFO] [Runtime] Initialising SDL2
+[13:56:36] [INFO] [Runtime] Initialising rendering
+[13:56:36] [INFO] [Render] Initialising window
+[13:56:37] [INFO] [Render] Initialising renderer
+[13:56:37] [INFO] [Render] Initialising GLEW
+[13:56:37] [INFO] [Render] Loading Shaders!
+[13:56:37] [INFO] [Runtime] Initialising objects
+[13:56:37] [INFO] [Runtime] Initialising entities
+[13:56:37] [INFO] [Runtime] Initialising UI
+[13:56:37] [INFO] [Runtime] Initialising Game
+[13:56:37] [INFO] [Runtime] Initialisation Complete!
+[13:56:40] [INFO] [Runtime] Destroying entities
+[13:56:40] [INFO] [Runtime] Destroying objects
+[13:56:40] [INFO] [Runtime] Destroying rendering
+[13:56:40] [INFO] [Render] Destroying textures and dict.
+[13:56:40] [INFO] [Render] Destroying renderer
+[13:56:40] [INFO] [Render] Destroying window
+[13:56:40] [INFO] [Runtime] Destroying SDL2
+[13:56:40] [INFO] [Runtime] Closing Engine! So long, and goodnight!
