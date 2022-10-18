@@ -4,10 +4,9 @@ char* mnemonicNames[16] = {
 	"ldli"
 	,"ldhi"
 	,"load"
-	,"sthi"
-	,"stli"
 	,"sth"
-	,"stl"
+	,"sta"
+	,"str"
 	,"add"
 	,"sub"
 	,"or"
@@ -99,7 +98,95 @@ uint32_t arithmeticShiftRight(uint32_t input, int count) {
 
 }
 
+void handleJAL(instruction insr) {
+	if (insr.condition & 0b10000) {
+		switch (insr.condition) {
+			case 0: //JALNEQ
+				if (registerBank[insr.register3] != registerBank[insr.register4]) {
+					registerBank[insr.register1] = specialReg[0] + 4;
+					specialReg[0] = registerBank[insr.register2];
+				}
+				break;
+
+			case 1: //JALLEQ
+				if (registerBank[insr.register3] <= registerBank[insr.register4]) {
+					registerBank[insr.register1] = specialReg[0] + 4;
+					specialReg[0] = registerBank[insr.register2];
+				}
+				break;
+
+			case 2: //JALGEQ
+				if (registerBank[insr.register3] >= registerBank[insr.register4]) {
+					registerBank[insr.register1] = specialReg[0] + 4;
+					specialReg[0] = registerBank[insr.register2];
+				}
+				break;
+
+			case 3: //JALLEQS
+				if ((int32_t)registerBank[insr.register3] <= (int32_t)registerBank[insr.register4]) {
+					registerBank[insr.register1] = specialReg[0] + 4;
+					specialReg[0] = registerBank[insr.register2];
+				}
+				break;
+
+			case 4: //JALGEQS
+				if ((int32_t)registerBank[insr.register3] >= (int32_t)registerBank[insr.register4]) {
+					registerBank[insr.register1] = specialReg[0] + 4;
+					specialReg[0] = registerBank[insr.register2];
+				}
+				break;
+
+			default:
+				printf("UNIMPLEMENTED JALCC: %d\n", insr.condition);
+		}
+	} else {
+		switch (insr.condition) {
+			case 0: //JALEQ
+				if (registerBank[insr.register3] == registerBank[insr.register4]) {
+					registerBank[insr.register1] = specialReg[0] + 4;
+					specialReg[0] = registerBank[insr.register2];
+				}
+				break;
+
+			case 1: //JALG
+				if (registerBank[insr.register3] > registerBank[insr.register4]) {
+					registerBank[insr.register1] = specialReg[0] + 4;
+					specialReg[0] = registerBank[insr.register2];
+				}
+				break;
+
+			case 2: //JALL
+				if (registerBank[insr.register3] < registerBank[insr.register4]) {
+					registerBank[insr.register1] = specialReg[0] + 4;
+					specialReg[0] = registerBank[insr.register2];
+				}
+				break;
+
+			case 3: //JALGS
+				if ((int32_t)registerBank[insr.register3] > (int32_t)registerBank[insr.register4]) {
+					registerBank[insr.register1] = specialReg[0] + 4;
+					specialReg[0] = registerBank[insr.register2];
+				}
+				break;
+
+			case 4: //JALLS
+				if ((int32_t)registerBank[insr.register3] < (int32_t)registerBank[insr.register4]) {
+					registerBank[insr.register1] = specialReg[0] + 4;
+					specialReg[0] = registerBank[insr.register2];
+				}
+				break;
+
+
+			default:
+				printf("UNIMPLEMENTED JALCC: %d\n", insr.condition);
+		}
+	}
+
+
+}
+
 int run_emu() {
+	uint32_t storeAddress = 0;
 	while(specialReg[0] < 40) {
 		printf("      r1: 0x%.8X, r2: 0x%.8X\n", registerBank[1], registerBank[2]);
 		printf("      r3: 0x%.8X, r4: 0x%.8X\n", registerBank[3], registerBank[4]);
@@ -131,20 +218,70 @@ int run_emu() {
 				registerBank[insr.register1] = insr.operand;
 				break;
 
+			case 0x1: //LDH
+				registerBank[insr.register1] = insr.operand << 16;
+				break;
+
 			case 0x2: //LOAD
 				printf("load offset:%d\n", loadoffset);
 				registerBank[insr.register1] = constructWord(memorySpace[loadoffset], memorySpace[loadoffset + 1], memorySpace[loadoffset + 2], memorySpace[loadoffset + 3]);
 				break;
 
-			case 0x4: //STLI (TODO: add stlh support)
-				memorySpace[insr.operand] = registerBank[insr.register1] >> 24;
-				memorySpace[insr.operand + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
-				memorySpace[insr.operand + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
-				memorySpace[insr.operand + 3] = (registerBank[insr.register1]) & 0xFF;
+			case 0x3: //STH
+				storeAddress = insr.operand << 16;
 				break;
 
-			case 0x7: //ADD
+			case 0x4: //STLI
+				storeAddress = (storeAddress & 0xFF00) + insr.operand;
+				memorySpace[storeAddress] = registerBank[insr.register1] >> 24;
+				memorySpace[storeAddress + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
+				memorySpace[storeAddress + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
+				memorySpace[storeAddress + 3] = (registerBank[insr.register1]) & 0xFF;
+				break;
+
+			case 0x5: //STL
+				storeAddress = (storeAddress & 0xFF00) + insr.operand;
+				storeAddress = constructWord(memorySpace[storeAddress], memorySpace[storeAddress+1], memorySpace[storeAddress+2], memorySpace[storeAddress+3]);
+				memorySpace[storeAddress] = 	 registerBank[insr.register1] >> 24;
+				memorySpace[storeAddress + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
+				memorySpace[storeAddress + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
+				memorySpace[storeAddress + 3] = (registerBank[insr.register1]) & 0xFF;
+				break;
+
+			case 0x6: //ADD
 				registerBank[insr.register3] = registerBank[insr.register1] + registerBank[insr.register2];
+				break;
+
+			case 0x7: //SUB
+				registerBank[insr.register3] = registerBank[insr.register1] + registerBank[insr.register2];
+				break;
+
+			case 0x8: //OR
+				registerBank[insr.register3] = registerBank[insr.register1] | registerBank[insr.register2];
+				break;
+
+			case 0x9: //AND
+				registerBank[insr.register3] = registerBank[insr.register1] & registerBank[insr.register2];
+				break;
+
+			case 0xA: //XOR
+				registerBank[insr.register3] = registerBank[insr.register1] ^ registerBank[insr.register2];
+				break;
+
+			case 0xB: //NOT
+				registerBank[insr.register2] = ~registerBank[insr.register1];
+				break;
+
+			case 0xC: //LSL
+				registerBank[insr.register2] = registerBank[insr.register1] << insr.register3;
+				break;
+
+			case 0xD: //LSR
+				registerBank[insr.register2] = registerBank[insr.register1] >> insr.register3;
+				break;
+
+			case 0xE: //JALCC
+				handleJAL(insr);
 				break;
 
 			case 0xF: //JAL
