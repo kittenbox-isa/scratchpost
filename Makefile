@@ -11,9 +11,9 @@ LCC = gcc
 #LCFLAGS are our compile time flags for linux
 LCFLAGS = -lm -Iinclude
 
-DEBUGFLAGS = -g -rdynamic -DDEBUG
+DEBUGFLAGS = -g -rdynamic -DDEBUG -D__NOCOL__ 
 ASANFLAGS = -fsanitize=undefined -fsanitize=address
-DONTBEAFUCKINGIDIOT = -Werror -Wall -Wextra -pedantic -Wno-missing-field-initializers
+DONTBEAFUCKINGIDIOT = -Werror -Wall -Wextra -Wno-missing-field-initializers -Wno-format-zero-length
 
 %.o: %.c
 	$(LCC) -c -o $@ $< $(LCFLAGS) $(DEBUGFLAGS) $(DONTBEAFUCKINGIDIOT)

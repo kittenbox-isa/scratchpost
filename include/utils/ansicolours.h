@@ -75,3 +75,146 @@
 
 //Reset
 #define RESET "\033[0m"
+
+#ifdef __NOCOL__
+#undef BLK
+#undef RED
+#undef GRN
+#undef YEL
+#undef BLU
+#undef MAG
+#undef CYN
+#undef WHT
+
+//Regular bold text
+#undef BBLK
+#undef BRED
+#undef BGRN
+#undef BYEL
+#undef BBLU
+#undef BMAG
+#undef BCYN
+#undef BWHT
+
+//Regular underline text
+#undef UBLK
+#undef URED
+#undef UGRN
+#undef UYEL
+#undef UBLU
+#undef UMAG
+#undef UCYN
+#undef UWHT
+
+//Regular background
+#undef BLKB
+#undef REDB
+#undef GRNB
+#undef YELB
+#undef BLUB
+#undef MAGB
+#undef CYNB
+#undef WHTB
+
+//High intensty background 
+#undef BLKHB
+#undef REDHB
+#undef GRNHB
+#undef YELHB
+#undef BLUHB
+#undef MAGHB
+#undef CYNHB
+#undef WHTHB
+
+//High intensty text
+#undef HBLK 
+#undef HRED 
+#undef HGRN 
+#undef HYEL 
+#undef HBLU 
+#undef HMAG 
+#undef HCYN 
+#undef HWHT 
+
+//Bold high intensity text
+#undef BHBLK
+#undef BHRED
+#undef BHGRN
+#undef BHYEL
+#undef BHBLU
+#undef BHMAG
+#undef BHCYN
+#undef BHWHT
+#undef RESET
+
+#define BLK ""
+#define RED ""
+#define GRN ""
+#define YEL ""
+#define BLU ""
+#define MAG ""
+#define CYN ""
+#define WHT ""
+
+//Regular bold text
+#define BBLK ""
+#define BRED ""
+#define BGRN ""
+#define BYEL ""
+#define BBLU ""
+#define BMAG ""
+#define BCYN ""
+#define BWHT ""
+
+//Regular underline text
+#define UBLK ""
+#define URED ""
+#define UGRN ""
+#define UYEL ""
+#define UBLU ""
+#define UMAG ""
+#define UCYN ""
+#define UWHT ""
+
+//Regular background
+#define BLKB ""
+#define REDB ""
+#define GRNB ""
+#define YELB ""
+#define BLUB ""
+#define MAGB ""
+#define CYNB ""
+#define WHTB ""
+
+//High intensty background 
+#define BLKHB ""
+#define REDHB ""
+#define GRNHB ""
+#define YELHB ""
+#define BLUHB ""
+#define MAGHB ""
+#define CYNHB ""
+#define WHTHB ""
+
+//High intensty text
+#define HBLK ""
+#define HRED ""
+#define HGRN ""
+#define HYEL ""
+#define HBLU ""
+#define HMAG ""
+#define HCYN ""
+#define HWHT ""
+
+//Bold high intensity text
+#define BHBLK ""
+#define BHRED ""
+#define BHGRN ""
+#define BHYEL ""
+#define BHBLU ""
+#define BHMAG ""
+#define BHCYN ""
+#define BHWHT ""
+#define RESET ""
+
+#endif
