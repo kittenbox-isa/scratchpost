@@ -186,7 +186,6 @@ void handleJAL(instruction insr) {
 }
 
 int run_emu() {
-	uint32_t storeAddress = 0;
 	while(specialReg[0] < 40) {
 		printf("      r1: 0x%.8X, r2: 0x%.8X\n", registerBank[1], registerBank[2]);
 		printf("      r3: 0x%.8X, r4: 0x%.8X\n", registerBank[3], registerBank[4]);
@@ -227,64 +226,57 @@ int run_emu() {
 				registerBank[insr.register1] = constructWord(memorySpace[loadoffset], memorySpace[loadoffset + 1], memorySpace[loadoffset + 2], memorySpace[loadoffset + 3]);
 				break;
 
-			case 0x3: //STH
-				storeAddress = insr.operand << 16;
+			case 0x3: //STA
+				memorySpace[insr.operand] = registerBank[insr.register1] >> 24;
+				memorySpace[insr.operand + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
+				memorySpace[insr.operand + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
+				memorySpace[insr.operand + 3] = (registerBank[insr.register1]) & 0xFF;
 				break;
 
-			case 0x4: //STLI
-				storeAddress = (storeAddress & 0xFF00) + insr.operand;
-				memorySpace[storeAddress] = registerBank[insr.register1] >> 24;
-				memorySpace[storeAddress + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
-				memorySpace[storeAddress + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
-				memorySpace[storeAddress + 3] = (registerBank[insr.register1]) & 0xFF;
+			case 0x4: //STR
+				memorySpace[insr.register2] = 	 registerBank[insr.register1] >> 24;
+				memorySpace[insr.register2 + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
+				memorySpace[insr.register2 + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
+				memorySpace[insr.register2 + 3] = (registerBank[insr.register1]) & 0xFF;
 				break;
 
-			case 0x5: //STL
-				storeAddress = (storeAddress & 0xFF00) + insr.operand;
-				storeAddress = constructWord(memorySpace[storeAddress], memorySpace[storeAddress+1], memorySpace[storeAddress+2], memorySpace[storeAddress+3]);
-				memorySpace[storeAddress] = 	 registerBank[insr.register1] >> 24;
-				memorySpace[storeAddress + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
-				memorySpace[storeAddress + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
-				memorySpace[storeAddress + 3] = (registerBank[insr.register1]) & 0xFF;
-				break;
-
-			case 0x6: //ADD
+			case 0x5: //ADD
 				registerBank[insr.register3] = registerBank[insr.register1] + registerBank[insr.register2];
 				break;
 
-			case 0x7: //SUB
-				registerBank[insr.register3] = registerBank[insr.register1] + registerBank[insr.register2];
+			case 0x6: //SUB
+				registerBank[insr.register3] = registerBank[insr.register1] - registerBank[insr.register2];
 				break;
 
-			case 0x8: //OR
+			case 0x7: //OR
 				registerBank[insr.register3] = registerBank[insr.register1] | registerBank[insr.register2];
 				break;
 
-			case 0x9: //AND
+			case 0x8: //AND
 				registerBank[insr.register3] = registerBank[insr.register1] & registerBank[insr.register2];
 				break;
 
-			case 0xA: //XOR
+			case 0x9: //XOR
 				registerBank[insr.register3] = registerBank[insr.register1] ^ registerBank[insr.register2];
 				break;
 
-			case 0xB: //NOT
+			case 0xA: //NOT
 				registerBank[insr.register2] = ~registerBank[insr.register1];
 				break;
 
-			case 0xC: //LSL
+			case 0xB: //LSL
 				registerBank[insr.register2] = registerBank[insr.register1] << insr.register3;
 				break;
 
-			case 0xD: //LSR
+			case 0xC: //LSR
 				registerBank[insr.register2] = registerBank[insr.register1] >> insr.register3;
 				break;
 
-			case 0xE: //JALCC
+			case 0xD: //JALCC
 				handleJAL(insr);
 				break;
 
-			case 0xF: //JAL
+			case 0xE: //JAL
 				//unconditional for now
 				specialReg[0] = registerBank[insr.register3];
 				break;
@@ -307,8 +299,8 @@ addr | instruction
 0x04 | ldli $2, 0x1
 0x08 | ldli $3, 0x0
 0x0C | add  $1, $2, $3
-0x10 | stli $2, 0x0
-0x14 | stli $3, 0x4
+0x10 | sta $2, [0x0]
+0x14 | sta $3, [0x4]
 0x18 | load $1, $0, 0x0
 0x1C | load $2, $0, 0x4
 0x20 | ldli $4, 0x0C

@@ -26,18 +26,17 @@ EEEEEEEE EEEEEEEE
 0x0  |   ldli   | reg  imm            |  loads imm into the lower half of reg
 0x1  |   ldhi   | reg  imm            |  loads imm into the upper half of reg
 0x2  |   load   | reg1 reg2 imm       |  reg2 = *(reg1 + imm) (where imm is sign extended to 32 bits)
-0x3  |   sth    | reg  addr           |  loads the upper half of the store address
-0x4  |   sta    | reg  addr           |  stores reg into addr (including the upper stored by sth)
-0x5  |   str    | reg  addr           |  stores reg into *addr (including the upper stored by sth)
-0x6  |   add    | reg1 reg2 reg3      |  reg3 = reg1 + reg2
-0x7  |   sub    | reg1 reg2 reg3      |  reg3 = reg1 - reg2
-0x8  |   or     | reg1 reg2 reg3      |  reg3 = reg1 | reg2
-0x9  |   and    | reg1 reg2 reg3      |  reg3 = reg1 & reg2
-0xA  |   xor    | reg1 reg2 reg3      |  reg3 = reg1 ^ reg2
-0xB  |   not    | reg1 reg2           |  reg2 = ~reg1
-0xC  |   lsl    | reg1 reg2 n         |  reg2 = reg1 << n (logical shift left)
-0xD  |   lsr    | reg1 reg2 n         |  reg2 = reg1 >> n (logical shift right)
-0xE  |   jalcc  | reg1 reg2 reg3 reg4 |  jump and link condition - if condition is satisfied then
+0x3  |   sta    | reg  addr           |  stores reg into [addr]
+0x4  |   str    | reg1 reg2           |  stores reg1 into [reg2]
+0x5  |   add    | reg1 reg2 reg3      |  reg3 = reg1 + reg2
+0x6  |   sub    | reg1 reg2 reg3      |  reg3 = reg1 - reg2
+0x7  |   or     | reg1 reg2 reg3      |  reg3 = reg1 | reg2
+0x8  |   and    | reg1 reg2 reg3      |  reg3 = reg1 & reg2
+0x9  |   xor    | reg1 reg2 reg3      |  reg3 = reg1 ^ reg2
+0xA  |   not    | reg1 reg2           |  reg2 = ~reg1
+0xB  |   lsl    | reg1 reg2 n         |  reg2 = reg1 << n (logical shift left)
+0xC  |   lsr    | reg1 reg2 n         |  reg2 = reg1 >> n (logical shift right)
+0xD  |   jalcc  | reg1 reg2 reg3 reg4 |  jump and link condition - if condition is satisfied then
      |          |                     |        store return addr in reg1 and 
      |          |                     |        jump to value in reg2
 later opcodes to be used for mmio, mapping and multitasking 
