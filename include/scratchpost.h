@@ -18,6 +18,8 @@
 #include <signal.h>
 #include <errno.h>
 
+#include <SDL2/SDL.h>
+
 #include "init/init_header.h"
 #include "utils/utils_header.h"
 #include "core/core_header.h"

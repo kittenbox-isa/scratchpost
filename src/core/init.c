@@ -1,10 +1,9 @@
 #include "scratchpost.h"
 
 char* mnemonicNames[16] = {
-	"ldli"
-	,"ldhi"
+	"ldl"
+	,"ldh"
 	,"load"
-	,"sth"
 	,"sta"
 	,"str"
 	,"add"
@@ -21,16 +20,16 @@ char* mnemonicNames[16] = {
 uint8_t* memorySpace;
 
 uint8_t testProgram[40] = {
-	0x00, 0x10, 0x00, 0x01,
-	0x00, 0x20, 0x00, 0x01,
-	0x00, 0x30, 0x00, 0x00,
-	0x0E, 0x11, 0x0C, 0x00,
-	0x08, 0x20, 0x00, 0x00,
-	0x08, 0x30, 0x00, 0x04,
-	0x04, 0x10, 0x00, 0x00,
-	0x04, 0x20, 0x00, 0x04,
-	0x00, 0x40, 0x00, 0x0C,
-	0x1E, 0x00, 0x10, 0x00
+	0x00, 0x10, 0x10, 0x00,
+	0x00, 0x30, 0x00, 0x03,
+	0x00, 0x40, 0x00, 0x18,
+	0x00, 0x60, 0x00, 0x01,
+	0x02, 0x20, 0xFF, 0xBC,
+	0x00, 0x20, 0xF8, 0x00,
+	0x08, 0x20, 0x80, 0x00,
+	0x0A, 0x11, 0x84, 0x00,
+	0x0C, 0x23, 0x08, 0x00,
+	0x1A, 0x02, 0x00, 0x00
 };
 
 uint32_t registerBank[32];
@@ -48,7 +47,7 @@ typedef struct {
 
 int init_core() {
 	printf("hello from core!\n");
-	memorySpace = gmalloc(sizeof(*memorySpace) * 512);
+	memorySpace = gmalloc(sizeof(*memorySpace) * 16777216);
 	for (int i = 0; i < 40; i++) {
 		memorySpace[i] = testProgram[i];
 	}
@@ -56,6 +55,7 @@ int init_core() {
 		registerBank[i] = 0; 
 	}
 	specialReg[0] = 0;
+	debug = 0;
 	return 0;
 }
 
@@ -65,7 +65,7 @@ uint32_t constructWord(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
 	word += b << 16;
 	word += c << 8;
 	word += d;
-	printf("0x%.8X\n", word);
+	//printf("0x%.8X\n", word);
 	return word;
 }
 
@@ -80,8 +80,10 @@ instruction decodeInstruction(uint32_t addr) {
 	uint8_t r4 = (0b11111 << (32 - (7 + 5 + 5 + 5 + 5)) & word) >> (32 - (7 + 5 + 5 + 5 + 5));
 	uint8_t cond = (0b11111 << (32 - (7 + 5 + 5 + 5 + 5 + 5)) & word) >> (32 - (7 + 5 + 5 + 5 + 5 + 5));
 	uint16_t operand = (uint16_t)word;
-	printf("op: %s, reg1: %d, reg2: %d, reg3: %d\n", mnemonicNames[opcode], r1, r2, r3);
-	printf("operand: 0x%.4X\n", operand);
+	if (debug) {
+		printf("op: %s, reg1: %d, reg2: %d, reg3: %d\n", mnemonicNames[opcode], r1, r2, r3);
+		printf("operand: 0x%.4X\n", operand);
+	}
 	return (instruction){.opcode = opcode,
 						 .register1 = r1,
 						 .register2 = r2,
@@ -186,23 +188,25 @@ void handleJAL(instruction insr) {
 }
 
 int run_emu() {
-	while(specialReg[0] < 40) {
-		printf("      r1: 0x%.8X, r2: 0x%.8X\n", registerBank[1], registerBank[2]);
-		printf("      r3: 0x%.8X, r4: 0x%.8X\n", registerBank[3], registerBank[4]);
-		printf("      IP: 0x%.8X\n", specialReg[0]);
+	int run = 800*100;
+	while(run) {
 		instruction insr = decodeInstruction(specialReg[0]);
-		for (int i = 0; i < 512/32; i++) {
-			printf(YEL"0x%.4X"RESET" "BLU"|"RESET" ", i * 32);
-			for (int j = 0; j < 32; j++) {
-				if (j + i * 32 < (int)specialReg[0] + 4 && j + i * 32 >= (int)specialReg[0]) {
-					printf(RED);
+		if (debug) {
+			printf("      r1: 0x%.8X, r2: 0x%.8X\n", registerBank[1], registerBank[2]);
+			printf("      r3: 0x%.8X, r4: 0x%.8X\n", registerBank[3], registerBank[4]);
+			printf("      IP: 0x%.8X\n", specialReg[0]);		
+			for (int i = 0; i < 512/32; i++) {
+				printf(YEL"0x%.4X"RESET" "BLU"|"RESET" ", i * 32);
+				for (int j = 0; j < 32; j++) {
+					if (j + i * 32 < (int)specialReg[0] + 4 && j + i * 32 >= (int)specialReg[0]) {
+						printf(RED);
+					}
+					printf("%.2X "RESET, memorySpace[j + i * 32]);
 				}
-				printf("%.2X "RESET, memorySpace[j + i * 32]);
+				printf("\n");
 			}
 			printf("\n");
 		}
-		printf("\n");
-		printf("r3: %d\n", registerBank[3]);
 
 		registerBank[0] = 0;
 
@@ -214,7 +218,7 @@ int run_emu() {
 			loadoffset = 0;
 		switch (insr.opcode) {
 			case 0x0: //LDL				
-				registerBank[insr.register1] = insr.operand;
+				registerBank[insr.register1] += insr.operand;
 				break;
 
 			case 0x1: //LDH
@@ -222,7 +226,6 @@ int run_emu() {
 				break;
 
 			case 0x2: //LOAD
-				printf("load offset:%d\n", loadoffset);
 				registerBank[insr.register1] = constructWord(memorySpace[loadoffset], memorySpace[loadoffset + 1], memorySpace[loadoffset + 2], memorySpace[loadoffset + 3]);
 				break;
 
@@ -234,10 +237,10 @@ int run_emu() {
 				break;
 
 			case 0x4: //STR
-				memorySpace[insr.register2] = 	 registerBank[insr.register1] >> 24;
-				memorySpace[insr.register2 + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
-				memorySpace[insr.register2 + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
-				memorySpace[insr.register2 + 3] = (registerBank[insr.register1]) & 0xFF;
+				memorySpace[registerBank[insr.register2]] = 	 registerBank[insr.register1] >> 24;
+				memorySpace[registerBank[insr.register2] + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
+				memorySpace[registerBank[insr.register2] + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
+				memorySpace[registerBank[insr.register2] + 3] = (registerBank[insr.register1]) & 0xFF;
 				break;
 
 			case 0x5: //ADD
@@ -274,6 +277,7 @@ int run_emu() {
 
 			case 0xD: //JALCC
 				handleJAL(insr);
+				run--;
 				break;
 
 			case 0xE: //JAL
@@ -285,12 +289,55 @@ int run_emu() {
 				printf("UNIMPLEMENTED!: %d\n", insr.opcode);
 				exit(0);
 		}
-		
 	}
 	return 0;
 }
 
 //test program below
+
+/*
+ldli $1, 0x1000
+ldli $3, 0x3
+ldli $4, 0x14 
+ldhi $2, 0xffbc
+ldli $2, 0xf800
+str $2, $1
+add $1, $3, $1
+sub $2, $6, $2
+jaleq $0, $4, $0, $0
+
+0000000 00001 0000 00010000 00000000
+0000000 00011 0000 00000000 00000011
+0000000 00100 0000 00000000 00010100
+0000001 00010 0000 11111111 10111100
+0000000 00010 0000 11111000 00000000
+0000100 00010 00001 0000000 00000000
+0000101 00001 00011 00001 0000000000
+0000110 00010 00110 00010 0000000000
+0001101 00000 00100 00000 00000 00000
+
+00000000 00010000 00010000 00000000
+00000000 00110000 00000000 00000011
+00000000 01000000 00000000 00010100
+00000010 00100000 11111111 10111100
+00000000 00100000 11111000 00000000
+00001000 00100000 10000000 00000000
+00001010 00010001 10000100 00000000
+00001100 00100011 00001000 00000000
+00011010 00000010 00000000 00000000
+
+00 10 10 00
+00 30 00 03
+00 40 00 14
+02 20 FF BC
+00 20 F8 00
+08 20 80 00
+0A 11 84 00
+0C 21 88 00
+1A 02 00 00
+*/
+
+
 
 /*
 addr | instruction
