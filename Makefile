@@ -23,4 +23,5 @@ a.out : $(OBJECTS)
 
 clean: 
 	rm -f src/*/*.o
+	rm -f src/*/*/*.o
 	rm -f a.out
