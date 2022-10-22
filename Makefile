@@ -13,10 +13,10 @@ LCFLAGS = -lm -Iinclude
 
 DEBUGFLAGS = -g -DDEBUG -lSDL2
 ASANFLAGS = -fsanitize=undefined -fsanitize=address
-DONTBEAFUCKINGIDIOT = -Werror -Wno-missing-field-initializers -Wno-format-zero-length
+DONTBEAFUCKINGIDIOT = -Werror -Wno-missing-field-initializers -Wno-format-zero-length -fno-zero-initialized-in-bss
 
 %.o: %.c
-	$(LCC) -c -o $@ $< $(LCFLAGS) $(DEBUGFLAGS) $(DONTBEAFUCKINGIDIOT)
+	$(LCC) -c -o $@ $< $(LCFLAGS) $(DEBUGFLAGS) $(DONTBEAFUCKINGIDIOT) -shared
 
 a.out : $(OBJECTS)
 	$(LCC) $(OBJECTS) $(LCFLAGS) $(DEBUGFLAGS) $(DONTBEAFUCKINGIDIOT)
