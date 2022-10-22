@@ -13,7 +13,7 @@ LCFLAGS = -lm -Iinclude
 
 DEBUGFLAGS = -g -rdynamic -DDEBUG -lSDL2
 ASANFLAGS = -fsanitize=undefined -fsanitize=address
-DONTBEAFUCKINGIDIOT = -Werror -Wall -Wextra -Wno-missing-field-initializers -Wno-format-zero-length
+DONTBEAFUCKINGIDIOT = -Werror -Wno-missing-field-initializers -Wno-format-zero-length
 
 %.o: %.c
 	$(LCC) -c -o $@ $< $(LCFLAGS) $(DEBUGFLAGS) $(DONTBEAFUCKINGIDIOT)
