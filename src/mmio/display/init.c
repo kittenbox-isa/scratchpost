@@ -8,7 +8,7 @@ int initDisplay() {
 	loadFont("fonts/VGA8.F16");
 
 	//add MMIO allocation here
-	memorySpace[0x1100] = 1;
+
 	return 0;
 }
 

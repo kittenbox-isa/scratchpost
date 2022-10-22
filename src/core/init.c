@@ -1,7 +1,5 @@
 #include "scratchpost.h"
 
-
-
 char* mnemonicNames[16] = {
 	"ldl"
 	,"ldh"
@@ -183,6 +181,7 @@ void handleJAL(instruction insr) {
 
 			default:
 				printf("UNIMPLEMENTED JALCC: %d\n", insr.condition);
+				halted = 1;
 		}
 	}
 
@@ -281,7 +280,8 @@ int run_emu() {
 
 		default:
 			printf("UNIMPLEMENTED!: %d\n", insr.opcode);
-			exit(0);
+			halted = 1;
+			break;
 	}
 	return 0;
 }
