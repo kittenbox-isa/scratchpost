@@ -96,7 +96,7 @@ instruction decodeInstruction(uint32_t addr) {
 uint32_t arithmeticShiftRight(uint32_t input, int count) {
 	int64_t shift = input;
 	shift >>= count;
-	return (uint32_t)input;
+	return (uint32_t)shift;
 
 }
 
