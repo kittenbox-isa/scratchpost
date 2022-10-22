@@ -42,7 +42,6 @@ void crash() {
  */
 void signalHandler(int sig, siginfo_t *info, void *ucontext) {
 	char signalMessage[1024];
-	ucontext = ucontext;
 	switch(sig) {
 		case SIGSEGV:
 			sprintf(signalMessage, "Signal caught! SIGSEGV at addr. 0x%lx. CRASHING!", (long)info->si_addr);
