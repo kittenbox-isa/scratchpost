@@ -1,7 +1,7 @@
 #pragma once
 #define INIT_LOG_H
 
-FILE* logptr;
+extern FILE* logptr;
 
 enum level {
 	INF,

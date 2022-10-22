@@ -1,5 +1,9 @@
 #include "scratchpost.h"
 
+uint8_t* memorySpace;
+
+int debug;
+
 char* mnemonicNames[16] = {
 	"ldl"
 	,"ldh"

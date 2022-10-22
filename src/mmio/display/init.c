@@ -1,5 +1,8 @@
 #include "scratchpost.h"
 
+SDL_Window* window;
+SDL_Renderer* renderer;
+
 int initDisplay() {
 	SDL_Init(SDL_INIT_EVERYTHING);
 	window =  SDL_CreateWindow("Kibblebox display", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, 0);

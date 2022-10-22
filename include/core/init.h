@@ -4,6 +4,6 @@
 int init_core();
 int run_emu();
 
-uint8_t* memorySpace;
+extern uint8_t* memorySpace;
 
-int debug;
+extern int debug;
