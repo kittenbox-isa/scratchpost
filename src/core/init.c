@@ -20,7 +20,7 @@ char* mnemonicNames[16] = {
 uint8_t* memorySpace;
 
 uint8_t testProgram[40] = {
-	0x00, 0x10, 0x10, 0x00,
+	0x00, 0x10, 0x51, 0x00,
 	0x00, 0x30, 0x00, 0x03,
 	0x00, 0x40, 0x00, 0x18,
 	0x00, 0x60, 0x00, 0x01,
@@ -188,107 +188,98 @@ void handleJAL(instruction insr) {
 }
 
 int run_emu() {
-	int run = 800*100;
-	while(run) {
-		instruction insr = decodeInstruction(specialReg[0]);
-		if (debug) {
-			printf("      r1: 0x%.8X, r2: 0x%.8X\n", registerBank[1], registerBank[2]);
-			printf("      r3: 0x%.8X, r4: 0x%.8X\n", registerBank[3], registerBank[4]);
-			printf("      IP: 0x%.8X\n", specialReg[0]);		
-			for (int i = 0; i < 512/32; i++) {
-				printf(YEL"0x%.4X"RESET" "BLU"|"RESET" ", i * 32);
-				for (int j = 0; j < 32; j++) {
-					if (j + i * 32 < (int)specialReg[0] + 4 && j + i * 32 >= (int)specialReg[0]) {
-						printf(RED);
-					}
-					printf("%.2X "RESET, memorySpace[j + i * 32]);
+	instruction insr = decodeInstruction(specialReg[0]);
+	if (debug) {
+		printf("      r1: 0x%.8X, r2: 0x%.8X\n", registerBank[1], registerBank[2]);
+		printf("      r3: 0x%.8X, r4: 0x%.8X\n", registerBank[3], registerBank[4]);
+		printf("      IP: 0x%.8X\n", specialReg[0]);		
+		for (int i = 0; i < 512/32; i++) {
+			printf(YEL"0x%.4X"RESET" "BLU"|"RESET" ", i * 32);
+			for (int j = 0; j < 32; j++) {
+				if (j + i * 32 < (int)specialReg[0] + 4 && j + i * 32 >= (int)specialReg[0]) {
+					printf(RED);
 				}
-				printf("\n");
+				printf("%.2X "RESET, memorySpace[j + i * 32]);
 			}
 			printf("\n");
 		}
+		printf("\n");
+	}
 
-		registerBank[0] = 0;
+	registerBank[0] = 0;
+	specialReg[0]+=4;
+	//opcode decoding
+	//determine LOAD offset
+	uint32_t loadoffset = registerBank[insr.register2] + arithmeticShiftRight(insr.operand, 17);
+	if (loadoffset > 512) 
+		loadoffset = 0;
 
-		specialReg[0]+=4;
-		//opcode decoding
-		//determine LOAD offset
-		uint32_t loadoffset = registerBank[insr.register2] + arithmeticShiftRight(insr.operand, 17);
-		if (loadoffset > 512) 
-			loadoffset = 0;
-		switch (insr.opcode) {
-			case 0x0: //LDL				
-				registerBank[insr.register1] += insr.operand;
-				break;
+	switch (insr.opcode) {
+		case 0x0: //LDL				
+			registerBank[insr.register1] += insr.operand;
+			break;
 
-			case 0x1: //LDH
-				registerBank[insr.register1] = insr.operand << 16;
-				break;
+		case 0x1: //LDH
+			registerBank[insr.register1] = insr.operand << 16;
+			break;
 
-			case 0x2: //LOAD
-				registerBank[insr.register1] = constructWord(memorySpace[loadoffset], memorySpace[loadoffset + 1], memorySpace[loadoffset + 2], memorySpace[loadoffset + 3]);
-				break;
+		case 0x2: //LOAD
+			registerBank[insr.register1] = constructWord(memorySpace[loadoffset], memorySpace[loadoffset + 1], memorySpace[loadoffset + 2], memorySpace[loadoffset + 3]);
+			break;
 
-			case 0x3: //STA
-				memorySpace[insr.operand] = registerBank[insr.register1] >> 24;
-				memorySpace[insr.operand + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
-				memorySpace[insr.operand + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
-				memorySpace[insr.operand + 3] = (registerBank[insr.register1]) & 0xFF;
-				break;
+		case 0x3: //STA
+			memorySpace[insr.operand] = registerBank[insr.register1] >> 24;
+			memorySpace[insr.operand + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
+			memorySpace[insr.operand + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
+			memorySpace[insr.operand + 3] = (registerBank[insr.register1]) & 0xFF;
+			break;
 
-			case 0x4: //STR
-				memorySpace[registerBank[insr.register2]] = 	 registerBank[insr.register1] >> 24;
-				memorySpace[registerBank[insr.register2] + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
-				memorySpace[registerBank[insr.register2] + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
-				memorySpace[registerBank[insr.register2] + 3] = (registerBank[insr.register1]) & 0xFF;
-				break;
+		case 0x4: //STR
+			memorySpace[registerBank[insr.register2]] = 	 registerBank[insr.register1] >> 24;
+			memorySpace[registerBank[insr.register2] + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
+			memorySpace[registerBank[insr.register2] + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
+			memorySpace[registerBank[insr.register2] + 3] = (registerBank[insr.register1]) & 0xFF;
+			break;
 
-			case 0x5: //ADD
-				registerBank[insr.register3] = registerBank[insr.register1] + registerBank[insr.register2];
-				break;
+		case 0x5: //ADD
+			registerBank[insr.register3] = registerBank[insr.register1] + registerBank[insr.register2];
+			break;
 
-			case 0x6: //SUB
-				registerBank[insr.register3] = registerBank[insr.register1] - registerBank[insr.register2];
-				break;
+		case 0x6: //SUB
+			registerBank[insr.register3] = registerBank[insr.register1] - registerBank[insr.register2];
+			break;
 
-			case 0x7: //OR
-				registerBank[insr.register3] = registerBank[insr.register1] | registerBank[insr.register2];
-				break;
+		case 0x7: //OR
+			registerBank[insr.register3] = registerBank[insr.register1] | registerBank[insr.register2];
+			break;
 
-			case 0x8: //AND
-				registerBank[insr.register3] = registerBank[insr.register1] & registerBank[insr.register2];
-				break;
+		case 0x8: //AND
+			registerBank[insr.register3] = registerBank[insr.register1] & registerBank[insr.register2];
+			break;
 
-			case 0x9: //XOR
-				registerBank[insr.register3] = registerBank[insr.register1] ^ registerBank[insr.register2];
-				break;
+		case 0x9: //XOR
+			registerBank[insr.register3] = registerBank[insr.register1] ^ registerBank[insr.register2];
+			break;
 
-			case 0xA: //NOT
-				registerBank[insr.register2] = ~registerBank[insr.register1];
-				break;
+		case 0xA: //NOT
+			registerBank[insr.register2] = ~registerBank[insr.register1];
+			break;
 
-			case 0xB: //LSL
-				registerBank[insr.register2] = registerBank[insr.register1] << insr.register3;
-				break;
+		case 0xB: //LSL
+			registerBank[insr.register2] = registerBank[insr.register1] << insr.register3;
+			break;
 
-			case 0xC: //LSR
-				registerBank[insr.register2] = registerBank[insr.register1] >> insr.register3;
-				break;
+		case 0xC: //LSR
+			registerBank[insr.register2] = registerBank[insr.register1] >> insr.register3;
+			break;
 
-			case 0xD: //JALCC
-				handleJAL(insr);
-				run--;
-				break;
+		case 0xD: //JALCC
+			handleJAL(insr);
+			break;
 
-			case 0xE: //JAL
-				//unconditional for now
-				specialReg[0] = registerBank[insr.register3];
-				break;
-
-			default:
-				printf("UNIMPLEMENTED!: %d\n", insr.opcode);
-				exit(0);
-		}
+		default:
+			printf("UNIMPLEMENTED!: %d\n", insr.opcode);
+			exit(0);
 	}
 	return 0;
 }
@@ -296,7 +287,7 @@ int run_emu() {
 //test program below
 
 /*
-ldli $1, 0x1000
+ldli $1, 0x5100
 ldli $3, 0x3
 ldli $4, 0x14 
 ldhi $2, 0xffbc
@@ -306,7 +297,7 @@ add $1, $3, $1
 sub $2, $6, $2
 jaleq $0, $4, $0, $0
 
-0000000 00001 0000 00010000 00000000
+0000000 00001 0000 01010001 00000000
 0000000 00011 0000 00000000 00000011
 0000000 00100 0000 00000000 00010100
 0000001 00010 0000 11111111 10111100
@@ -316,7 +307,7 @@ jaleq $0, $4, $0, $0
 0000110 00010 00110 00010 0000000000
 0001101 00000 00100 00000 00000 00000
 
-00000000 00010000 00010000 00000000
+00000000 00010000 01010001 00000000
 00000000 00110000 00000000 00000011
 00000000 01000000 00000000 00010100
 00000010 00100000 11111111 10111100
@@ -326,7 +317,7 @@ jaleq $0, $4, $0, $0
 00001100 00100011 00001000 00000000
 00011010 00000010 00000000 00000000
 
-00 10 10 00
+00 10 51 00
 00 30 00 03
 00 40 00 14
 02 20 FF BC
