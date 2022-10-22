@@ -6,5 +6,5 @@ int runDisplay();
 int loadFont(char* filename);
 
 
-extern SDL_Window* window;
-extern SDL_Renderer* renderer;
+SDL_Window* window;
+SDL_Renderer* renderer;

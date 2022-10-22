@@ -4,7 +4,7 @@
 //logtofile is a function that takes a string e.g "hello there" and a type of log, e.g INF or SVR
 //an example usage would be logtofile("hello there", INF, "caller name");
 
-FILE* logptr;
+
 
 /**
  * @brief      logs a string to a file
