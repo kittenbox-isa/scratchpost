@@ -23,28 +23,23 @@ EEEEEEEE EEEEEEEE
 
  op  | mnemonic |        inputs       |        function
 -----+----------+---------------------+-------------------------------------
-0x0  |   ldl    | reg  imm            |  loads imm into the lower half of reg
-0x1  |   ldh    | reg  imm            |  loads imm into the upper half of reg
-0x2  |   load   | reg1 reg2 imm       |  reg2 = *(reg1 + imm) (where imm is sign extended to 32 bits)
-0x3  |   sta    | reg  addr           |  stores reg into [addr]
-0x4  |   str    | reg1 reg2           |  stores reg1 into [reg2]
-0x5  |   add    | reg1 reg2 reg3      |  reg3 = reg1 + reg2
-0x6  |   sub    | reg1 reg2 reg3      |  reg3 = reg1 - reg2
-0x7  |   or     | reg1 reg2 reg3      |  reg3 = reg1 | reg2
-0x8  |   and    | reg1 reg2 reg3      |  reg3 = reg1 & reg2
-0x9  |   xor    | reg1 reg2 reg3      |  reg3 = reg1 ^ reg2
-0xA  |   not    | reg1 reg2           |  reg2 = ~reg1
-0xB  |   lsl    | reg1 reg2 n         |  reg2 = reg1 << n (logical shift left)
-0xC  |   lsr    | reg1 reg2 n         |  reg2 = reg1 >> n (logical shift right)
-0xD  |   jalcc  | reg1 reg2 reg3 reg4 |  jump and link condition - if condition is satisfied then
+0x0  |   load   | reg1 MCD imm        |  *
+0x1  |   sta    | reg  addr           |  stores reg into [addr]
+0x2  |   str    | reg1 reg2           |  stores reg1 into [reg2]
+0x3  |   add    | reg1 reg2 reg3      |  reg3 = reg1 + reg2
+0x4  |   sub    | reg1 reg2 reg3      |  reg3 = reg1 - reg2
+0x5  |   or     | reg1 reg2 reg3      |  reg3 = reg1 | reg2
+0x6  |   and    | reg1 reg2 reg3      |  reg3 = reg1 & reg2
+0x7  |   xor    | reg1 reg2 reg3      |  reg3 = reg1 ^ reg2
+0x8  |   not    | reg1 reg2           |  reg2 = ~reg1
+0x9  |   lsl    | reg1 reg2 n         |  reg2 = reg1 << n (logical shift left)
+0xA  |   lsr    | reg1 reg2 n         |  reg2 = reg1 >> n (logical shift right)
+0xB  |   jalcc  | reg1 reg2 reg3 reg4 |  jump and link condition - if condition is satisfied then
      |          |                     |        store return addr in reg1 and 
      |          |                     |        jump to value in reg2
 later opcodes to be used for mmio, mapping and multitasking 
 
-
-JALCC
-
-the extra 5 bits of JALCC can be used to get all of the conditions below
+extra 5 bits of JALCC can be used to get all of the conditions below
 NJJJJ
 
 J - defines the JAL mode
@@ -61,3 +56,29 @@ JALLEQ
 JALGEQ
 JALLEQS
 JALGEQS
+
+*
+LOAD IMMEDIATE INSTRUCTION FAMILY
+
+------- ----- ---- ----------------
+ OPCODE  DEST  MCD        IMMEDIATE
+
+OPCODE
+  a single shared opcode for the instruction family
+
+DEST
+  the encoding of the destination register
+
+MCD (minor opcode)
+  0000 - load lower immediate (no effect on upper register) (LDLI)
+  0001 - load upper immediate (no effect on lower register) (LDUI)
+  0010 - load lower immediate (zero upper register) (LDLZ)
+  0011 - load upper immediate (zero lower register) (LDUZ)
+  0100 - load lower immediate (set* upper register) (LDLS)
+  0101 - load upper immediate (set* lower register) (LDUS)
+  0110 -  ?
+  0111 -  ?
+
+  1xxx - prepend xxx to imm and load from absolute address
+
+* "set" here meaning set each bit to 1

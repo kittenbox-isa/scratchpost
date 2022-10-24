@@ -6,19 +6,21 @@ MMIO TABLE:
 
 
 
-0x200
+0x200 - vga text mode table
 -	
-0x1074 - vga text mode table
-0x1075
--
-0x10FF - display settings*
-0x1100
--
-0x50FF - vga text mode font
+0x1074
 
-0x5100
+0x1075 - display settings*
 -
-0x164900 - vga colour mode table
+0x10FF 
+
+0x1100 - vga text mode font
+-
+0x50FF
+
+0x5100 - vga colour mode table
+-
+0x164900 
 
 
 

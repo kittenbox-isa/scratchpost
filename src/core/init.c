@@ -1,9 +1,7 @@
 #include "scratchpost.h"
 
 char* mnemonicNames[16] = {
-	"ldl"
-	,"ldh"
-	,"load"
+	"load"
 	,"sta"
 	,"str"
 	,"add"
@@ -17,6 +15,7 @@ char* mnemonicNames[16] = {
 	,"jalcc"
 };
 
+
 uint8_t* memorySpace;
 
 uint8_t testProgram[40] = {
@@ -24,12 +23,12 @@ uint8_t testProgram[40] = {
 	0x00, 0x30, 0x00, 0x03,
 	0x00, 0x40, 0x00, 0x18,
 	0x00, 0x60, 0x00, 0x01,
-	0x02, 0x20, 0xFF, 0xBC,
+	0x00, 0x20, 0xFF, 0xBC,
 	0x00, 0x20, 0xF8, 0x00,
-	0x08, 0x20, 0x80, 0x00,
-	0x0A, 0x11, 0x84, 0x00,
-	0x0C, 0x23, 0x08, 0x00,
-	0x1A, 0x02, 0x00, 0x00
+	0x00, 0x20, 0x80, 0x00,
+	0x00, 0x11, 0x84, 0x00,
+	0x00, 0x23, 0x08, 0x00,
+	0x16, 0x02, 0x00, 0x00
 };
 
 uint32_t registerBank[32];
@@ -130,7 +129,7 @@ void handleJAL(instruction insr) {
 					specialReg[0] = registerBank[insr.register2];
 				}
 				break;
-
+			
 			case 4: //JALGEQS
 				if ((int32_t)registerBank[insr.register3] >= (int32_t)registerBank[insr.register4]) {
 					registerBank[insr.register1] = specialReg[0] + 4;
@@ -188,6 +187,45 @@ void handleJAL(instruction insr) {
 
 }
 
+void handleLOAD(instruction insr) {
+	int mcd = insr.register2 >> 1;
+	if (mcd & 0b1000) {
+		int addr = (mcd & 0b111) << 16 + insr.operand;
+		registerBank[insr.register1] = constructWord(memorySpace[addr], memorySpace[addr + 1], memorySpace[addr + 2], memorySpace[addr + 3]);
+		return;
+	}
+
+	switch(mcd) {
+		case 0: //LDLI
+			registerBank[insr.register1] = registerBank[insr.register1] & 0xFFFF0000 + registerBank[insr.operand];
+			break;
+
+		case 1: //LDUI
+			registerBank[insr.register1] = registerBank[insr.register1] & 0x0000FFFF + (insr.operand << 16);
+			break;
+			
+		case 2: //LDLZ
+			registerBank[insr.register1] = insr.operand;
+			break;
+			
+		case 3: //LDUZ
+			registerBank[insr.register1] = insr.operand << 16;
+			break;
+			
+		case 4: //LDLS
+			registerBank[insr.register1] = insr.operand | 0xFFFF0000;
+			break;
+			
+		case 5: //LDUS
+			registerBank[insr.register1] = insr.operand << 16 | 0x0000FFFF;
+			break;
+			
+		default:
+			printf("UNIMPLEMENTED LOAD: %d\n", mcd);
+			halted = 1;
+	}
+}
+
 int run_emu() {
 	instruction insr = decodeInstruction(specialReg[0]);
 	if (debug) {
@@ -216,65 +254,57 @@ int run_emu() {
 		loadoffset = 0;
 
 	switch (insr.opcode) {
-		case 0x0: //LDL				
-			registerBank[insr.register1] += insr.operand;
-			break;
-
-		case 0x1: //LDH
-			registerBank[insr.register1] = insr.operand << 16;
-			break;
-
-		case 0x2: //LOAD
+		case 0x0: //LOAD
 			registerBank[insr.register1] = constructWord(memorySpace[loadoffset], memorySpace[loadoffset + 1], memorySpace[loadoffset + 2], memorySpace[loadoffset + 3]);
 			break;
 
-		case 0x3: //STA
+		case 0x1: //STA
 			memorySpace[insr.operand] = registerBank[insr.register1] >> 24;
 			memorySpace[insr.operand + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
 			memorySpace[insr.operand + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
 			memorySpace[insr.operand + 3] = (registerBank[insr.register1]) & 0xFF;
 			break;
 
-		case 0x4: //STR
+		case 0x2: //STR
 			memorySpace[registerBank[insr.register2]] = 	 registerBank[insr.register1] >> 24;
 			memorySpace[registerBank[insr.register2] + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
 			memorySpace[registerBank[insr.register2] + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
 			memorySpace[registerBank[insr.register2] + 3] = (registerBank[insr.register1]) & 0xFF;
 			break;
 
-		case 0x5: //ADD
+		case 0x3: //ADD
 			registerBank[insr.register3] = registerBank[insr.register1] + registerBank[insr.register2];
 			break;
 
-		case 0x6: //SUB
+		case 0x4: //SUB
 			registerBank[insr.register3] = registerBank[insr.register1] - registerBank[insr.register2];
 			break;
 
-		case 0x7: //OR
+		case 0x5: //OR
 			registerBank[insr.register3] = registerBank[insr.register1] | registerBank[insr.register2];
 			break;
 
-		case 0x8: //AND
+		case 0x6: //AND
 			registerBank[insr.register3] = registerBank[insr.register1] & registerBank[insr.register2];
 			break;
 
-		case 0x9: //XOR
+		case 0x7: //XOR
 			registerBank[insr.register3] = registerBank[insr.register1] ^ registerBank[insr.register2];
 			break;
 
-		case 0xA: //NOT
+		case 0x8: //NOT
 			registerBank[insr.register2] = ~registerBank[insr.register1];
 			break;
 
-		case 0xB: //LSL
+		case 0x9: //LSL
 			registerBank[insr.register2] = registerBank[insr.register1] << insr.register3;
 			break;
 
-		case 0xC: //LSR
+		case 0xA: //LSR
 			registerBank[insr.register2] = registerBank[insr.register1] >> insr.register3;
 			break;
 
-		case 0xD: //JALCC
+		case 0xB: //JALCC
 			handleJAL(insr);
 			break;
 
@@ -307,7 +337,7 @@ jaleq $0, $4, $0, $0
 0000100 00010 00001 0000000 00000000
 0000101 00001 00011 00001 0000000000
 0000110 00010 00110 00010 0000000000
-0001101 00000 00100 00000 00000 00000
+0001011 00000 00100 00000 00000 00000
 
 00000000 00010000 01010001 00000000
 00000000 00110000 00000000 00000011
@@ -317,7 +347,7 @@ jaleq $0, $4, $0, $0
 00001000 00100000 10000000 00000000
 00001010 00010001 10000100 00000000
 00001100 00100011 00001000 00000000
-00011010 00000010 00000000 00000000
+00010110 00000010 00000000 00000000
 
 00 10 51 00
 00 30 00 03
@@ -327,7 +357,7 @@ jaleq $0, $4, $0, $0
 08 20 80 00
 0A 11 84 00
 0C 21 88 00
-1A 02 00 00
+16 02 00 00
 */
 
 
@@ -355,7 +385,7 @@ addr | instruction
 0000010 00001 00000 0000000 00000000
 0000010 00010 00000 0000000 00000100
 0000000 00100 0000 00000000 00001100
-0001111 00000 00000 00100 0000000000
+0001011 00000 00000 00100 0000000000
 
 
 00000000 00010000 00000000 00000001
