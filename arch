@@ -23,18 +23,19 @@ EEEEEEEE EEEEEEEE
 
  op  | mnemonic |        inputs       |        function
 -----+----------+---------------------+-------------------------------------
-0x0  |   load   | reg1 MCD imm        |  *
-0x1  |   sta    | reg  addr           |  stores reg into [addr]
-0x2  |   str    | reg1 reg2           |  stores reg1 into [reg2]
-0x3  |   add    | reg1 reg2 reg3      |  reg3 = reg1 + reg2
-0x4  |   sub    | reg1 reg2 reg3      |  reg3 = reg1 - reg2
-0x5  |   or     | reg1 reg2 reg3      |  reg3 = reg1 | reg2
-0x6  |   and    | reg1 reg2 reg3      |  reg3 = reg1 & reg2
-0x7  |   xor    | reg1 reg2 reg3      |  reg3 = reg1 ^ reg2
-0x8  |   not    | reg1 reg2           |  reg2 = ~reg1
-0x9  |   lsl    | reg1 reg2 n         |  reg2 = reg1 << n (logical shift left)
-0xA  |   lsr    | reg1 reg2 n         |  reg2 = reg1 >> n (logical shift right)
-0xB  |   jalcc  | reg1 reg2 reg3 reg4 |  jump and link condition - if condition is satisfied then
+0x0  |   ldi    | reg1 MCD imm        |  *
+0x1  |   ldr    | reg1 reg2 imm       |  reg2 = *(reg1 + imm) (where imm is sign extended to 32 bits)
+0x2  |   sta    | reg  addr           |  stores reg into [addr]
+0x3  |   str    | reg1 reg2           |  stores reg1 into [reg2]
+0x4  |   add    | reg1 reg2 reg3      |  reg3 = reg1 + reg2
+0x5  |   sub    | reg1 reg2 reg3      |  reg3 = reg1 - reg2
+0x6  |   or     | reg1 reg2 reg3      |  reg3 = reg1 | reg2
+0x7  |   and    | reg1 reg2 reg3      |  reg3 = reg1 & reg2
+0x8  |   xor    | reg1 reg2 reg3      |  reg3 = reg1 ^ reg2
+0x9  |   not    | reg1 reg2           |  reg2 = ~reg1
+0xA  |   lsl    | reg1 reg2 n         |  reg2 = reg1 << n (logical shift left) - rethink this
+0xB  |   lsr    | reg1 reg2 n         |  reg2 = reg1 >> n (logical shift right)
+0xC  |   jalcc  | reg1 reg2 reg3 reg4 |  jump and link condition - if condition is satisfied then
      |          |                     |        store return addr in reg1 and 
      |          |                     |        jump to value in reg2
 later opcodes to be used for mmio, mapping and multitasking 
@@ -50,7 +51,7 @@ JALGS - J = 3 (greater than signed)
 JALLS - J = 4 (less than signed)
 
 N - sets negation
-N = 0
+N = 1
 JALNEQ
 JALLEQ
 JALGEQ
@@ -79,6 +80,6 @@ MCD (minor opcode)
   0110 -  ?
   0111 -  ?
 
-  1xxx - prepend xxx to imm and load from absolute address
+  1xxx - prepend xxx to imm and load from absolute address (LDA)
 
 * "set" here meaning set each bit to 1

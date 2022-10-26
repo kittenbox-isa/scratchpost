@@ -2,6 +2,7 @@
 
 char* mnemonicNames[16] = {
 	"load"
+	,"ldr"
 	,"sta"
 	,"str"
 	,"add"
@@ -15,10 +16,32 @@ char* mnemonicNames[16] = {
 	,"jalcc"
 };
 
+char* jalccNames[10] = {
+	"jaleq",
+	"jalneq",
+	"jalg",
+	"jalleq",
+	"jall",
+	"jalgeq",
+	"jalgs",
+	"jalleqs",
+	"jalls",
+	"jalgeqs"
+};
+
+char* loadNames[8] = {
+	"ldli",
+	"ldui",
+	"ldlz",
+	"lduz",
+	"ldls",
+	"ldus"
+};
+
 
 uint8_t* memorySpace;
 
-uint8_t testProgram[40] = {
+/*uint8_t testProgram[40] = {
 	0x00, 0x10, 0x51, 0x00,
 	0x00, 0x30, 0x00, 0x03,
 	0x00, 0x40, 0x00, 0x18,
@@ -29,6 +52,17 @@ uint8_t testProgram[40] = {
 	0x00, 0x11, 0x84, 0x00,
 	0x00, 0x23, 0x08, 0x00,
 	0x16, 0x02, 0x00, 0x00
+}; pink */
+
+uint8_t testProgram[32] = {
+	0x00, 0x10, 0x00, 0x01,
+	0x00, 0x20, 0x00, 0x01,
+	0x00, 0x30, 0x00, 0x00,
+	0x00, 0x90, 0x00, 0x10,
+	0x06, 0x11, 0x0C, 0x00,
+	0x06, 0x20, 0x04, 0x00,
+	0x06, 0x30, 0x08, 0x00,
+	0x16, 0x04, 0x80, 0x00
 };
 
 uint32_t registerBank[32];
@@ -46,7 +80,10 @@ typedef struct {
 
 int init_core() {
 	printf("hello from core!\n");
-	memorySpace = gmalloc(sizeof(*memorySpace) * 16777216);
+	int memorySpaceSize = 16777216;
+	memorySpace = gmalloc(sizeof(*memorySpace) * memorySpaceSize);
+	memset(memorySpace, 0, memorySpaceSize);
+
 	for (int i = 0; i < 40; i++) {
 		memorySpace[i] = testProgram[i];
 	}
@@ -80,7 +117,15 @@ instruction decodeInstruction(uint32_t addr) {
 	uint8_t cond = (0b11111 << (32 - (7 + 5 + 5 + 5 + 5 + 5)) & word) >> (32 - (7 + 5 + 5 + 5 + 5 + 5));
 	uint16_t operand = (uint16_t)word;
 	if (debug) {
-		printf("op: %s, reg1: %d, reg2: %d, reg3: %d\n", mnemonicNames[opcode], r1, r2, r3);
+		char* opcodeName = mnemonicNames[opcode];
+		if (opcode == 0xC) {
+			opcodeName = jalccNames[cond >> 4 + (cond & 0b1111) * 2];
+		}
+
+		if (opcode == 0x0) {
+			opcodeName = loadNames[r2 >> 1];
+		}
+		printf("op: %s, reg1: %d, reg2: %d, reg3: %d reg4: %d cond: %d\n", opcodeName, r1, r2, r3, r4, cond);
 		printf("operand: 0x%.4X\n", operand);
 	}
 	return (instruction){.opcode = opcode,
@@ -101,7 +146,7 @@ uint32_t arithmeticShiftRight(uint32_t input, int count) {
 
 void handleJAL(instruction insr) {
 	if (insr.condition & 0b10000) {
-		switch (insr.condition) {
+		switch (insr.condition & 0b1111) {
 			case 0: //JALNEQ
 				if (registerBank[insr.register3] != registerBank[insr.register4]) {
 					registerBank[insr.register1] = specialReg[0] + 4;
@@ -189,7 +234,7 @@ void handleJAL(instruction insr) {
 
 void handleLOAD(instruction insr) {
 	int mcd = insr.register2 >> 1;
-	if (mcd & 0b1000) {
+	if ((mcd & 0b1000) != 0) {
 		int addr = (mcd & 0b111) << 16 + insr.operand;
 		registerBank[insr.register1] = constructWord(memorySpace[addr], memorySpace[addr + 1], memorySpace[addr + 2], memorySpace[addr + 3]);
 		return;
@@ -197,11 +242,11 @@ void handleLOAD(instruction insr) {
 
 	switch(mcd) {
 		case 0: //LDLI
-			registerBank[insr.register1] = registerBank[insr.register1] & 0xFFFF0000 + registerBank[insr.operand];
+			registerBank[insr.register1] = (registerBank[insr.register1] & 0xFFFF0000) + insr.operand;
 			break;
 
 		case 1: //LDUI
-			registerBank[insr.register1] = registerBank[insr.register1] & 0x0000FFFF + (insr.operand << 16);
+			registerBank[insr.register1] = (registerBank[insr.register1] & 0x0000FFFF) + (insr.operand << 16);
 			break;
 			
 		case 2: //LDLZ
@@ -231,14 +276,15 @@ int run_emu() {
 	if (debug) {
 		printf("      r1: 0x%.8X, r2: 0x%.8X\n", registerBank[1], registerBank[2]);
 		printf("      r3: 0x%.8X, r4: 0x%.8X\n", registerBank[3], registerBank[4]);
-		printf("      IP: 0x%.8X\n", specialReg[0]);		
+		printf("      IP: 0x%.8X\n", specialReg[0]);
+        int offset = 0x200000;		
 		for (int i = 0; i < 512/32; i++) {
-			printf(YEL"0x%.4X"RESET" "BLU"|"RESET" ", i * 32);
+			printf(YEL"0x%.8X"RESET" "BLU"|"RESET" ", offset + i * 32);
 			for (int j = 0; j < 32; j++) {
-				if (j + i * 32 < (int)specialReg[0] + 4 && j + i * 32 >= (int)specialReg[0]) {
+				if (offset + j + i * 32 < (int)specialReg[0] + 4 && j + i * 32 >= (int)specialReg[0]) {
 					printf(RED);
 				}
-				printf("%.2X "RESET, memorySpace[j + i * 32]);
+				printf("%.2X "RESET, memorySpace[offset + j + i * 32]);
 			}
 			printf("\n");
 		}
@@ -248,63 +294,65 @@ int run_emu() {
 	registerBank[0] = 0;
 	specialReg[0]+=4;
 	//opcode decoding
-	//determine LOAD offset
-	uint32_t loadoffset = registerBank[insr.register2] + arithmeticShiftRight(insr.operand, 17);
-	if (loadoffset > 512) 
-		loadoffset = 0;
+	//calculate LDR offset
+	uint32_t ldroffset = registerBank[insr.register2] + arithmeticShiftRight(insr.operand, 17);
 
 	switch (insr.opcode) {
-		case 0x0: //LOAD
-			registerBank[insr.register1] = constructWord(memorySpace[loadoffset], memorySpace[loadoffset + 1], memorySpace[loadoffset + 2], memorySpace[loadoffset + 3]);
+		case 0x0: //LDI
+			handleLOAD(insr);
 			break;
 
-		case 0x1: //STA
+		case 0x1: //LDR
+			registerBank[insr.register1] = constructWord(memorySpace[ldroffset], memorySpace[ldroffset + 1], memorySpace[ldroffset + 2], memorySpace[ldroffset + 3]);
+			break;
+
+		case 0x2: //STA
 			memorySpace[insr.operand] = registerBank[insr.register1] >> 24;
 			memorySpace[insr.operand + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
 			memorySpace[insr.operand + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
 			memorySpace[insr.operand + 3] = (registerBank[insr.register1]) & 0xFF;
 			break;
 
-		case 0x2: //STR
-			memorySpace[registerBank[insr.register2]] = 	 registerBank[insr.register1] >> 24;
+		case 0x3: //STR
+			memorySpace[registerBank[insr.register2]    ] =  registerBank[insr.register1] >> 24;
 			memorySpace[registerBank[insr.register2] + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
-			memorySpace[registerBank[insr.register2] + 2] = (registerBank[insr.register1] >> 8) & 0xFF;
-			memorySpace[registerBank[insr.register2] + 3] = (registerBank[insr.register1]) & 0xFF;
+			memorySpace[registerBank[insr.register2] + 2] = (registerBank[insr.register1] >> 8 ) & 0xFF;
+			memorySpace[registerBank[insr.register2] + 3] = (registerBank[insr.register1]      ) & 0xFF;
 			break;
 
-		case 0x3: //ADD
+		case 0x4: //ADD
 			registerBank[insr.register3] = registerBank[insr.register1] + registerBank[insr.register2];
 			break;
 
-		case 0x4: //SUB
+		case 0x5: //SUB
 			registerBank[insr.register3] = registerBank[insr.register1] - registerBank[insr.register2];
 			break;
 
-		case 0x5: //OR
+		case 0x6: //OR
 			registerBank[insr.register3] = registerBank[insr.register1] | registerBank[insr.register2];
 			break;
 
-		case 0x6: //AND
+		case 0x7: //AND
 			registerBank[insr.register3] = registerBank[insr.register1] & registerBank[insr.register2];
 			break;
 
-		case 0x7: //XOR
+		case 0x8: //XOR
 			registerBank[insr.register3] = registerBank[insr.register1] ^ registerBank[insr.register2];
 			break;
 
-		case 0x8: //NOT
+		case 0x9: //NOT
 			registerBank[insr.register2] = ~registerBank[insr.register1];
 			break;
 
-		case 0x9: //LSL
+		case 0xA: //LSL
 			registerBank[insr.register2] = registerBank[insr.register1] << insr.register3;
 			break;
 
-		case 0xA: //LSR
+		case 0xB: //LSR
 			registerBank[insr.register2] = registerBank[insr.register1] >> insr.register3;
 			break;
 
-		case 0xB: //JALCC
+		case 0xC: //JALCC
 			handleJAL(insr);
 			break;
 

@@ -4,8 +4,6 @@
 MMIO TABLE:
 0x0000
 
-
-
 0x200 - vga text mode table
 -	
 0x1074
@@ -20,9 +18,10 @@ MMIO TABLE:
 
 0x5100 - vga colour mode table
 -
-0x164900 
+0x164900 RGB 800x600
 
 
-
+0x00000000
+0xFFFFFFFF
 
 */
