@@ -294,8 +294,8 @@ int run_emu() {
 	registerBank[0] = 0;
 	specialReg[0]+=4;
 	//opcode decoding
-	//calculate LDR offset
-	uint32_t ldroffset = registerBank[insr.register2] + arithmeticShiftRight(insr.operand, 17);
+	//calculate LDR/STR offset
+	uint32_t memoffset = registerBank[insr.register2] + arithmeticShiftRight(insr.operand, 17);
 
 	switch (insr.opcode) {
 		case 0x0: //LDI
@@ -303,7 +303,7 @@ int run_emu() {
 			break;
 
 		case 0x1: //LDR
-			registerBank[insr.register1] = constructWord(memorySpace[ldroffset], memorySpace[ldroffset + 1], memorySpace[ldroffset + 2], memorySpace[ldroffset + 3]);
+			registerBank[insr.register1] = constructWord(memorySpace[memoffset], memorySpace[memoffset + 1], memorySpace[memoffset + 2], memorySpace[memoffset + 3]);
 			break;
 
 		case 0x2: //STA
@@ -314,10 +314,10 @@ int run_emu() {
 			break;
 
 		case 0x3: //STR
-			memorySpace[registerBank[insr.register2]    ] =  registerBank[insr.register1] >> 24;
-			memorySpace[registerBank[insr.register2] + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
-			memorySpace[registerBank[insr.register2] + 2] = (registerBank[insr.register1] >> 8 ) & 0xFF;
-			memorySpace[registerBank[insr.register2] + 3] = (registerBank[insr.register1]      ) & 0xFF;
+			memorySpace[memoffset    ] =  registerBank[insr.register1] >> 24;
+			memorySpace[memoffset + 1] = (registerBank[insr.register1] >> 16) & 0xFF;
+			memorySpace[memoffset + 2] = (registerBank[insr.register1] >> 8 ) & 0xFF;
+			memorySpace[memoffset + 3] = (registerBank[insr.register1]      ) & 0xFF;
 			break;
 
 		case 0x4: //ADD

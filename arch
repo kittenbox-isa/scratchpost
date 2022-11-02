@@ -26,7 +26,7 @@ EEEEEEEE EEEEEEEE
 0x0  |   ldi    | reg1 MCD imm        |  *
 0x1  |   ldr    | reg1 reg2 imm       |  reg2 = *(reg1 + imm) (where imm is sign extended to 32 bits)
 0x2  |   sta    | reg  addr           |  stores reg into [addr]
-0x3  |   str    | reg1 reg2           |  stores reg1 into [reg2]
+0x3  |   str    | reg1 reg2 imm       |  stores reg1 into [reg2 + imm]
 0x4  |   add    | reg1 reg2 reg3      |  reg3 = reg1 + reg2
 0x5  |   sub    | reg1 reg2 reg3      |  reg3 = reg1 - reg2
 0x6  |   or     | reg1 reg2 reg3      |  reg3 = reg1 | reg2
